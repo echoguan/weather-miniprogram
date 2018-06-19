@@ -7,8 +7,17 @@ const weatherMap = {
   'snow': '雪'
 }
 
-Page({
+const weatherColorMap = {
+  'sunny': '#cbeefd',
+  'cloudy': '#deeef6',
+  'overcast': '#c6ced2',
+  'lightrain': '#bdd5e1',
+  'heavyrain': '#c5ccd0',
+  'snow': '#aae1fc'
+}
 
+
+Page({
   /**
    * 页面的初始数据
    */
@@ -22,24 +31,7 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: function (options) {
-    wx.request({
-      url: 'https://test-miniprogram.com/api/weather/now',
-      data: {
-        city: '广州市'
-      },
-      success: res => {
-        let result = res.data.result;
-        let temp = result.now.temp;
-        let weather = result.now.weather;
-        console.log(temp, weather);
-
-        this.setData({
-          nowTemp: temp + "°",
-          nowWeather: weatherMap[weather],
-          nowWeatherBackground: `/images/${weather}-bg.png`
-        })
-      }
-    })
+    this.getNow();
   },
 
   /**
@@ -74,7 +66,9 @@ Page({
    * 页面相关事件处理函数--监听用户下拉动作
    */
   onPullDownRefresh: function () {
-    
+    this.getNow( () => {
+      wx.stopPullDownRefresh();
+    });
   },
 
   /**
@@ -89,5 +83,36 @@ Page({
    */
   onShareAppMessage: function () {
     
+  },
+
+  /**
+   * 获取当前的天气情况并刷新页面
+   */
+  getNow(callback) {
+    wx.request({
+      url: 'https://test-miniprogram.com/api/weather/now',
+      data: {
+        city: '广州市'
+      },
+      success: res => {
+        let result = res.data.result;
+        let temp = result.now.temp;
+        let weather = result.now.weather;
+
+        this.setData({
+          nowTemp: temp + "°",
+          nowWeather: weatherMap[weather],
+          nowWeatherBackground: `/images/${weather}-bg.png`
+        })
+
+        wx.setNavigationBarColor({
+          frontColor: '#000000',
+          backgroundColor: weatherColorMap[weather],
+        })
+      },
+      complete: () => {
+        callback && callback()
+      }
+    })
   }
 })
