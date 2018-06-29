@@ -22,10 +22,6 @@ const UNPROMPTED = 0
 const UNAUTHORIZED = 1
 const AUTHORIZED = 2
 
-const UNPROMPTED_TIPS = "点击获取当前位置"
-const UNAUTHORIZED_TIPS = "点击开启位置权限"
-const AUTHORIZED_TIPS = ""
-
 Page({
   /**
    * 页面的初始数据
@@ -38,8 +34,7 @@ Page({
     todayTemp: "",
     todayDate: "",
     city: "广州市",
-    locationAuthType: UNPROMPTED,
-    locationTipsText: UNPROMPTED_TIPS
+    locationAuthType: UNPROMPTED
   },
 
   /**
@@ -51,35 +46,24 @@ Page({
       key: 'EQWBZ-7KS66-WPOS6-ENSFZ-AHZOS-5HFBL'
     });
 
-    this.getNow();
-  },
+    wx.getSetting({
+      success: res => {
+        const auth = res.authSetting['scope.userLocation']
+        const locationAuthType = auth ? (auth === true ? AUTHORIZED : UNAUTHORIZED) : UNPROMPTED
+        this.setData({
+          locationAuthType
+        })
 
-  /**
-   * 生命周期函数--监听页面初次渲染完成
-   */
-  onReady: function () {
-    
-  },
-
-  /**
-   * 生命周期函数--监听页面显示
-   */
-  onShow: function () {
-    
-  },
-
-  /**
-   * 生命周期函数--监听页面隐藏
-   */
-  onHide: function () {
-    
-  },
-
-  /**
-   * 生命周期函数--监听页面卸载
-   */
-  onUnload: function () {
-    
+        if(auth) {
+          this.getCityAndWeather()   // 使用定位城市
+        } else {
+          this.getNow() //使用默认城市
+        }
+      },
+      fail: () => {
+        this.getNow() //使用默认城市
+      }
+    })    
   },
 
   /**
@@ -89,20 +73,6 @@ Page({
     this.getNow( () => {
       wx.stopPullDownRefresh();
     });
-  },
-
-  /**
-   * 页面上拉触底事件的处理函数
-   */
-  onReachBottom: function () {
-    
-  },
-
-  /**
-   * 用户点击右上角分享
-   */
-  onShareAppMessage: function () {
-    
   },
 
   /**
@@ -174,11 +144,14 @@ Page({
   },
 
   onTapLocation() {
+    this.getCityAndWeather()
+  },
+
+  getCityAndWeather() {
     wx.getLocation({
       success: res => {
         this.setData({
-          locationAuthType: AUTHORIZED,
-          locationTipsText: AUTHORIZED_TIPS
+          locationAuthType: AUTHORIZED
         })
 
         this.qqmapsdk.reverseGeocoder({
@@ -189,8 +162,7 @@ Page({
           success: res => {
             let city = res.result.address_component.city
             this.setData({
-              city: city,
-              locationTipsText: ""
+              city: city
             })
             this.getNow()
           }
@@ -198,8 +170,7 @@ Page({
       },
       fail: () => {
         this.setData({
-          locationAuthType: UNAUTHORIZED,
-          locationTipsText: UNAUTHORIZED_TIPS
+          locationAuthType: UNAUTHORIZED
         })
       }
     })
